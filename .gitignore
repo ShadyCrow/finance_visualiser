@@ -1,0 +1,62 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+
+# C extensions
+*.so
+*.dylib
+*.dll
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+*.egg
+sdist/
+*.whl
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Dependencies
+.pip/
+pip-wheel-metadata/
+
+# Python interpreter specific files
+*.pyp
+
+# Pytest cache (if using pytest)
+.pytest_cache/
+
+# Tox (test automation)
+.tox/
+
+# MyPy (static type checker)
+.mypy_cache/
+
+# Jupyter Notebook files (if applicable)
+.ipynb_checkpoints
+
+# Editor/IDE specific files
+.vscode/        # VS Code
+.idea/          # PyCharm/IntelliJ
+*.sublime-project
+*.sublime-workspace
+
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+
+# Any other files you want to ignore (e.g., config files with credentials)
+# config.ini
+# *.log
