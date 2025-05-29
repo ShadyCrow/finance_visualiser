@@ -1,7 +1,10 @@
-from PySide6.QtWidgets import QMainWindow, QWidget
+from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter
 from PySide6.QtCore import Qt
+
 from menu_bar import MenuBar
 from data_entry_widget import DataEntryWidget
+from central_widget_plot import GraphWidget
+from calculate_data import CalculateDataWidget
 
 
 class MainWindow(QMainWindow):
@@ -35,7 +38,9 @@ class MainWindow(QMainWindow):
         # self._create_tool_bar()
         
         # Create the central widget for the main window.
-        self._create_central_widget()
+        self._create_central_layout()
+        
+        self._create_connections()
         
         # Maximize the main window to fill the screen.
         self.showMaximized()
@@ -57,19 +62,33 @@ class MainWindow(QMainWindow):
         status_bar.showMessage(f"Ready", 5000)
         self.setStatusBar(status_bar)
         
-    def _create_central_widget(self):
-        """Create the central widget for the main window.
-        This method can be overridden to set a custom central widget.
+    def _create_central_layout(self):
+        """Create the central layout for the main window.
+        This method can be overridden to set a custom central layout.
         """
-        # Set the central widget to None by default.
-        # This can be overridden in subclasses to set a custom widget.
-        #self.setCentralWidget(None)
         
-        # Optionally, you can create a placeholder widget here
-        # if you want to have a default central widget.
-        # For example:
-        # placeholder_widget = QWidget()
-        # self.setCentralWidget(placeholder_widget)
-    
+        central_container_widget = QWidget()
+        self.setCentralWidget(central_container_widget)
 
+        self.splitter = QSplitter(Qt.Horizontal, self)
+
+        main_horizontal_layout = QHBoxLayout(central_container_widget)
+
+        self.data_entry_widget = DataEntryWidget()
+        self.graph_widget = GraphWidget()
+        self.calculate_data_widget = CalculateDataWidget()
         
+        self.splitter.addWidget(self.data_entry_widget)
+        self.splitter.addWidget(self.graph_widget)
+        self.splitter.addWidget(self.calculate_data_widget)
+        
+        self.splitter.setSizes([200, 500, 200])
+        
+        main_horizontal_layout.addWidget(self.splitter)
+        
+    def _create_connections(self):
+        """Create connections between widgets and slots.
+        This method can be overridden to set up custom connections.
+        """
+        self.data_entry_widget.data_updated.connect(self.graph_widget.update_graph_data)
+        self.data_entry_widget.data_updated.connect(self.calculate_data_widget.update_data)
