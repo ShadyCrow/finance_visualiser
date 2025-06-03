@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QPushButton, QMess
 from PySide6.QtCore import Qt, Signal, Slot
 
 class DataEntryWidget(QWidget):
-    data_updated = Signal(str, str, int)
+    data_updated = Signal(str, str, int, float)
     
     def __init__(self):
         super().__init__()
@@ -33,6 +33,12 @@ class DataEntryWidget(QWidget):
         self.investment_period_line_edit.setPlaceholderText("e.g. 10")
         self.investment_period_line_edit.setToolTip("Enter the investment period in years.")
         form_layout.addRow(self.investment_period_label, self.investment_period_line_edit)
+        
+        self.investment_per_year_label = QLabel("Amount invested per year:")
+        self.investment_per_year_line_edit = QLineEdit()
+        self.investment_per_year_line_edit.setPlaceholderText("e.g. 5000")
+        self.investment_per_year_line_edit.setToolTip("Enter the amount invested per year.")
+        form_layout.addRow(self.investment_per_year_label, self.investment_per_year_line_edit)
 
         self.calculate_button = QPushButton("Calculate")
         self.calculate_button.clicked.connect(self._on_calculate)
@@ -47,12 +53,20 @@ class DataEntryWidget(QWidget):
             starting_amount = float(self.starting_amount_line_edit.text())
             growth_rate = float(self.growth_rate_line_edit.text()) / 100
             investment_period = int(self.investment_period_line_edit.text())
+            investment_per_year = float(self.investment_per_year_line_edit.text())
             
+            # Calculate the future including the investment per year.
             future_value = starting_amount * ((1 + growth_rate) ** investment_period)
+            for year in range(1, investment_period + 1):
+                future_value += investment_per_year * ((1 + growth_rate) ** (investment_period - year))
+
+
+            # Emit the data_updated signal with the calculated values.
             self.data_updated.emit(
                 str(starting_amount), 
                 str(growth_rate * 100), 
-                investment_period
+                investment_period,
+                investment_per_year
             )
             print("Data updated:", starting_amount, growth_rate * 100, investment_period)
             print(f"Future Value: {future_value:.2f}")
