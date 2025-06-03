@@ -70,7 +70,7 @@ class DataEntryWidget(QWidget):
             )
             print("Data updated:", starting_amount, growth_rate * 100, investment_period)
             print(f"Future Value: {future_value:.2f}")
-            QMessageBox.information(self, "Future Value", f"The future value is: ${future_value:.2f}")
+            # QMessageBox.information(self, "Future Value", f"The future value is: ${future_value:.2f}")
         except ValueError:
             QMessageBox.warning(self, "Input Error", "Please enter valid numeric values.")
 
