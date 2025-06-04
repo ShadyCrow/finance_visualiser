@@ -1,37 +1,12 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QLabel, QFrame
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QFrame
 from PySide6.QtCore import Qt, Slot, QPointF
-from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis
-from PySide6.QtGui import QPainter, QMouseEvent, QPen
+from PySide6.QtCharts import QChart, QLineSeries, QChartView
+from custom_chart_view import CustomChartView
+from PySide6.QtGui import QAction, QPainter, QKeySequence
+
 import numpy as np
 
-class CustomChartView(QChartView):
-    def __init__(self, chart, parent=None):
-        super().__init__(chart, parent)
-        self.setMouseTracking(True)
-        self.chart = chart
-        self.hover_coordinate_label = None
 
-    def set_hover_coordinate_label(self, label: QLabel):
-        """Sets a QLabel to display the hovered coordinates."""
-        self.hover_coordinate_label = label
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-
-        view_position = event.pos()
-        
-        scene_position = self.mapToScene(view_position)
-
-        chart_item_position = self.chart.mapFromScene(scene_position)
-        
-        value_coordinate = self.chart.mapToValue(chart_item_position)
-        
-        if self.hover_coordinate_label:
-            self.hover_coordinate_label.setText(f"X: {value_coordinate.x():.2f}, Y: {value_coordinate.y():.2f}")
-        
-    def leaveEvent(self, event):
-        if self.hover_coordinate_label:
-            self.hover_coordinate_label.setText("")
-        return super().leaveEvent(event)
 
 
 class GraphWidget(QFrame):
@@ -51,22 +26,36 @@ class GraphWidget(QFrame):
         
         # Create the chart view to display the graph.
         self.graph_view = CustomChartView(self.graph)
-        # self.graph_view.setRenderHint(QPainter.Antialiasing)
+        self.graph_view.setRenderHint(QPainter.Antialiasing)
         self.graph_view.setMinimumSize(800, 600)
+        self.graph_view.setRubberBand(CustomChartView.RectangleRubberBand)
         layout.addWidget(self.graph_view)
         
         # Set the style of the graph widget.
         self.setStyleSheet("background-color: lightgray;")
         
+        
+        reset_action = QAction("Reset Graph", self)
+        reset_action.setShortcut("Ctrl+R")
+        reset_action.triggered.connect(self.graph.zoomReset)
+        self.addAction(reset_action)
+        
         # Create a label to display data.
         self.coordinate_label = QLabel("Mouse Coordinates:")
         self.coordinate_label.setAlignment(Qt.AlignCenter)
         self.graph_view.set_hover_coordinate_label(self.coordinate_label)
+        
+        # Create a label to display the series name and value.
+        self.series_label = QLabel("Series Information:")
+        self.series_label.setAlignment(Qt.AlignCenter)
+        self.graph_view.set_series_label(self.series_label)
 
         # Set the alignment and word wrap for the label.
         self.coordinate_label.setWordWrap(True)
+        self.series_label.setWordWrap(True) 
         
         layout.addWidget(self.coordinate_label)
+        layout.addWidget(self.series_label)
 
     @Slot(str, str, int, float)
     def update_graph_data(self, starting_amount, growth_rate, investment_period, investment_per_year):
@@ -91,6 +80,15 @@ class GraphWidget(QFrame):
         self.series.clear()
         points = [QPointF(x, y) for x, y in zip(x_values, y_values)]
         self.series.append(points)
+        
+        print(f"{type(self.series)}")
+        print(f"Series Points: {self.series.points()}") 
+        print(f"Series Points Count: {self.series.count()}")
+        
+        # Set tooltip for the series
+        self.series.setPointsVisible(True)
+        self.series.setPointLabelsVisible(False)
+        
         self.graph.addSeries(self.series)
         self.graph.createDefaultAxes()
 
