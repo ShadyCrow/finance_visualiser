@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QVBoxLayout, QLabel, QFrame
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QFrame, QStyle
 from PySide6.QtCore import Qt, Slot, QPointF
-from PySide6.QtCharts import QChart, QLineSeries, QChartView
+from PySide6.QtCharts import QChart, QLineSeries,  QChartView
 from custom_chart_view import CustomChartView
 from PySide6.QtGui import QAction, QPainter, QKeySequence
 
@@ -32,13 +32,11 @@ class GraphWidget(QFrame):
         layout.addWidget(self.graph_view)
         
         # Set the style of the graph widget.
-        self.setStyleSheet("background-color: lightgray;")
-        
-        
-        reset_action = QAction("Reset Graph", self)
+        self.setStyleSheet("background-color: black;")
+
+        reset_action = self.graph_view.addAction("Reset Zoom", "Reset the zoom level of the graph.")
         reset_action.setShortcut("Ctrl+R")
-        reset_action.triggered.connect(self.graph.zoomReset)
-        self.addAction(reset_action)
+        reset_action.triggered.connect(self.graph_view.reset_zoom)
         
         # Create a label to display data.
         self.coordinate_label = QLabel("Mouse Coordinates:")
@@ -74,9 +72,7 @@ class GraphWidget(QFrame):
              total *= (1 + growth_rate)
              total += investment_per_year
              y_values.append(total)
- 
-        # y_values = starting_amount*(1 + growth_rate)**x_values
-        
+         
         self.series.clear()
         points = [QPointF(x, y) for x, y in zip(x_values, y_values)]
         self.series.append(points)
@@ -87,5 +83,8 @@ class GraphWidget(QFrame):
         
         self.graph.addSeries(self.series)
         self.graph.createDefaultAxes()
+        
+        
+        self.graph_view.set_original_range()
 
         # self.data_display_label.setText(f"Graph Widget: {starting_amount}, {growth_rate}, {investment_period}, {investment_per_year} - Data updated successfully.")

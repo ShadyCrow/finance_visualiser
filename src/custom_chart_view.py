@@ -1,5 +1,5 @@
-from PySide6.QtCharts import QChartView, QLineSeries, QXYSeries
-from PySide6.QtGui import QMouseEvent, QPen, QColor
+from PySide6.QtCharts import QChartView, QLineSeries, QXYSeries, QValueAxis
+from PySide6.QtGui import QMouseEvent, QPen, QColor, QWheelEvent, QPainter
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import QPointF, Qt
 
@@ -8,6 +8,9 @@ class CustomChartView(QChartView):
         super().__init__(chart, parent)
         self.setMouseTracking(True)
         self.chart = chart
+        
+        self.setRenderHint(QPainter.Antialiasing)
+        
         self.hover_coordinate_label = None
         self.series_label = None
         
@@ -15,7 +18,10 @@ class CustomChartView(QChartView):
         self.original_point_size = 1
         self.highlighted_point_size = 8
         
-        # Creat
+        self.original_range_x = 0
+        self.original_range_y = 0
+
+        # Create point configurations
         self.original_point_configuration = {
                 QXYSeries.PointConfiguration.Size: self.original_point_size
             }
@@ -66,7 +72,7 @@ class CustomChartView(QChartView):
                 
                 if self.series_label:
                     self.series_label.setText(
-                        f"X: {nearest_point.x():.2f} years, Y: ${nearest_point.y():.2f}")
+                        f"X: {int(nearest_point.x())} years, Y: ${nearest_point.y():,.2f}")
             else:
                 self.highlight_nearest_point(None, series)
                 if self.series_label:
@@ -138,5 +144,119 @@ class CustomChartView(QChartView):
             series.setPointConfiguration(point_index, self.highlighted_point_configuration)
 
             self.highlighted_point = point
+            
+            
+    def wheelEvent(self, event: QWheelEvent):
+        mouse_position = event.position()
+        plot_area = self.chart.plotArea()
 
+        axis_tolerance = 50
+
+        if mouse_position.x() < plot_area.left() + axis_tolerance and \
+           mouse_position.y() > plot_area.top() and \
+           mouse_position.y() < plot_area.bottom():
+            
+            difference = event.angleDelta().y()
+           
+            # Checks to ensure that the Y axis exists
+            y_axis = None
+            for axis in self.chart.axes(Qt.Orientation.Vertical):
+                if isinstance(axis, QValueAxis):
+                    y_axis = axis
+                    break
+            
+            if y_axis:
+                current_minimum = y_axis.min()
+                current_maximum = y_axis.max()
+                
+                current_range = current_maximum - current_minimum
+                
+                zoom_factor = 0.1
+                
+                if difference > 0:
+                    new_min = current_minimum + current_range * zoom_factor / 2
+                    new_max = current_maximum - current_range * zoom_factor / 2
+                elif difference <= 0:
+                    new_min = current_minimum - current_range * zoom_factor / 2
+                    new_max = current_maximum + current_range * zoom_factor / 2
+                    
+                if new_min < new_max:
+                    y_axis.setRange(new_min, new_max)
+                else:
+                    y_axis.setRange(new_min, new_max)
+                event.accept()
+                
+            else:
+                super().wheelEvent(event)
+                
+        elif mouse_position.y() > plot_area.bottom() - axis_tolerance and \
+             mouse_position.x() > plot_area.left() and \
+             mouse_position.x() < plot_area.right():
+            
+            # Refers to the angle of scrolling, not the axis on the graph
+            difference_x = event.angleDelta().y()
+            
+            # Checks to ensure that the x axis exists           
+            x_axis = None
+            for axis in self.chart.axes(Qt.Orientation.Horizontal):
+                if isinstance(axis, QValueAxis):
+                    x_axis = axis
+                    break
+                
+            if x_axis:
+                current_minimum = x_axis.min()
+                current_maximum = x_axis.max()
+                
+                current_range = current_maximum - current_minimum
+                
+                zoom_factor = 0.1
+                
+                if difference_x > 0:
+                    new_min = current_minimum + current_range * zoom_factor / 2
+                    new_max = current_maximum - current_range * zoom_factor / 2
+                elif difference_x <= 0:
+                    new_min = current_minimum - current_range * zoom_factor / 2
+                    new_max = current_maximum + current_range * zoom_factor / 2
+                    
+                if new_min < new_max:
+                    x_axis.setRange(new_min, new_max)
+                else:
+                    x_axis.setRange(new_min, new_max)
+                event.accept()
+                
+            else:
+                super().wheelEvent(event)
+            
+            
+        else:
+            super().wheelEvent(event)
+
+    def set_original_range(self):
+         # Store the original range of the axes        
+        for axis in self.chart.axes(Qt.Orientation.Horizontal):
+                if isinstance(axis, QValueAxis):
+                    self.original_range_x = (axis.min(), axis.max())
+                    
+        for axis in self.chart.axes(Qt.Orientation.Vertical):
+            if isinstance(axis, QValueAxis):
+                self.original_range_y = (axis.min(), axis.max())
+
+    def reset_zoom(self):
+        # Reset the zoom level to the original range
+        x_axis = None
+        for axis in self.chart.axes(Qt.Orientation.Horizontal):
+            if isinstance(axis, QValueAxis):
+                x_axis = axis
+                break
+            
+        y_axis = None
+        for axis in self.chart.axes(Qt.Orientation.Vertical):
+            if isinstance(axis, QValueAxis):
+                y_axis = axis
+                break
+
+        # Check if the original ranges are set and apply them
+        if x_axis and y_axis:
+            x_axis.setRange(float(self.original_range_x[0]), float(self.original_range_x[1]))
+            y_axis.setRange(float(self.original_range_y[0]), float(self.original_range_y[1]))
 
