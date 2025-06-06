@@ -54,48 +54,49 @@ class CustomChartView(QChartView):
             value_coordinate = self.chart.mapToValue(chart_item_position)
             nearest_point = self.calculate_nearest_point(value_coordinate)
             
-            if nearest_point:  # Make sure we have a valid point
+                
+            if event.button() == Qt.MouseButton.LeftButton or event.button() == Qt.MouseButton.RightButton:
+                # Handle marker placement for both left and right clicks
+                is_left = event.button() == Qt.MouseButton.LeftButton
+                
                 marker_radius = 5
                 marker_size = QRectF(-marker_radius, -marker_radius, marker_radius * 2, marker_radius * 2)
                 marker_pen = QPen(QColor(Qt.black), 1)
                 
-                if event.button() == Qt.MouseButton.LeftButton or event.button() == Qt.MouseButton.RightButton:
-                    # Handle marker placement for both left and right clicks
-                    is_left = event.button() == Qt.MouseButton.LeftButton
-                    
-                    # Remove existing marker if it exists
-                    marker = self.left_click_marker if is_left else self.right_click_marker
-                    marker_text = self.left_click_text if is_left else self.right_click_text
-                    
-                    if marker:
-                        self.scene().removeItem(marker)
-                    if marker_text:
-                        self.scene().removeItem(marker_text)
-                    
-                    # Create new marker
-                    marker_brush = QBrush(QColor(Qt.green if is_left else Qt.cyan))
-                    new_marker = QGraphicsEllipseItem(marker_size)
-                    new_marker.setPen(marker_pen)
-                    new_marker.setBrush(marker_brush)
-                    new_marker.setPos(self.chart.mapToPosition(nearest_point))
-                    self.scene().addItem(new_marker)
-                    
-                    # Update the marker reference
-                    if is_left:
-                        self.left_click_marker = new_marker
-                    else:
-                        self.right_click_marker = new_marker
-                    
-                    self.scene().update()
-                    event.accept()
-                    return
-        
-        # Important: Accept the event even if we don't have a valid point
-        event.accept()
-        return
+                
+                # Remove existing marker if it exists
+                marker = self.left_click_marker if is_left else self.right_click_marker
+                marker_text = self.left_click_text if is_left else self.right_click_text
+                
+                if marker:
+                    self.scene().removeItem(marker)
+                if marker_text:
+                    self.scene().removeItem(marker_text)
+                
+                # Create new marker
+                marker_brush = QBrush(QColor(Qt.green if is_left else Qt.cyan))
+                new_marker = QGraphicsEllipseItem(marker_size)
+                new_marker.setPen(marker_pen)
+                new_marker.setBrush(marker_brush)
+                new_marker.setPos(self.chart.mapToPosition(nearest_point))
+                self.scene().addItem(new_marker)
+                
+                # Update the marker reference
+                if is_left:
+                    self.left_click_marker = new_marker
+                else:
+                    self.right_click_marker = new_marker
+                
+                self.scene().update()
+                event.accept()
+                return
+    
+            # Important: Accept the event even if we don't have a valid point
+            event.accept()
+            return
     
         # Only call parent implementation if C is not pressed
-        # super().mousePressEvent(event)
+        super().mousePressEvent(event)
     
     def mouseReleaseEvent(self, event):
         if self.c_key_pressed and event.button() == Qt.MouseButton.RightButton:
