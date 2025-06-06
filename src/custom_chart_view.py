@@ -12,8 +12,18 @@ class CustomChartView(QChartView):
         self.series_label = None
         
         self.highlighted_point = None
-        self.original_point_size = 2
+        self.original_point_size = 1
         self.highlighted_point_size = 8
+        
+        # Creat
+        self.original_point_configuration = {
+                QXYSeries.PointConfiguration.Size: self.original_point_size
+            }
+        
+        self.highlighted_point_configuration = { 
+                QXYSeries.PointConfiguration.Size: self.highlighted_point_size,
+                QXYSeries.PointConfiguration.Color: QColor(Qt.red)
+            }
 
     def set_hover_coordinate_label(self, label: QLabel):
         """Sets a QLabel to display the hovered coordinates."""
@@ -65,7 +75,10 @@ class CustomChartView(QChartView):
     # Used to clear the labels when the mouse leaves the chart area.
     def leaveEvent(self, event):
         if self.chart.series():
-            self.highlight_nearest_point(None, self.chart.series()[0])
+            for point in self.chart.series()[0].points():
+                reset_point = self.chart.series()[0].points().index(point)
+                self.chart.series()[0].setPointConfiguration(reset_point, self.original_point_configuration)
+            
 
         if self.hover_coordinate_label:
             self.hover_coordinate_label.setText("")
@@ -118,19 +131,11 @@ class CustomChartView(QChartView):
         
         # Reset previous highlighted point
         if self.highlighted_point is not None:
-            original_point_configuration = {
-                QXYSeries.PointConfiguration.Color: QColor(Qt.white),
-                QXYSeries.PointConfiguration.Size: self.original_point_size
-            }
-            series.setPointConfiguration(previous_point_index, original_point_configuration)
+            series.setPointConfiguration(previous_point_index, self.original_point_configuration)
 
         # Highlight new point
         if point is not None:
-            highlighted_point_configuration = { 
-                QXYSeries.PointConfiguration.Size: self.highlighted_point_size,
-                QXYSeries.PointConfiguration.Color: QColor(Qt.red)
-            }
-            series.setPointConfiguration(point_index, highlighted_point_configuration)
+            series.setPointConfiguration(point_index, self.highlighted_point_configuration)
 
             self.highlighted_point = point
 
