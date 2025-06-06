@@ -80,11 +80,7 @@ class GraphWidget(QFrame):
         self.series.clear()
         points = [QPointF(x, y) for x, y in zip(x_values, y_values)]
         self.series.append(points)
-        
-        print(f"{type(self.series)}")
-        print(f"Series Points: {self.series.points()}") 
-        print(f"Series Points Count: {self.series.count()}")
-        
+                
         # Set tooltip for the series
         self.series.setPointsVisible(True)
         self.series.setPointLabelsVisible(False)
