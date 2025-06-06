@@ -1,7 +1,7 @@
 from PySide6.QtCharts import QChartView, QLineSeries, QXYSeries, QValueAxis
-from PySide6.QtGui import QMouseEvent, QPen, QColor, QWheelEvent, QPainter
-from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import QPointF, Qt
+from PySide6.QtGui import QMouseEvent, QPen, QColor, QWheelEvent, QPainter, QBrush
+from PySide6.QtWidgets import QLabel, QGraphicsTextItem, QGraphicsItem, QGraphicsEllipseItem
+from PySide6.QtCore import QPointF, Qt, QRectF
 
 class CustomChartView(QChartView):
     def __init__(self, chart, parent=None):
@@ -20,6 +20,13 @@ class CustomChartView(QChartView):
         
         self.original_range_x = 0
         self.original_range_y = 0
+        
+        
+        self.left_click_marker = None
+        self.left_click_text = None
+        self.right_click_marker = None
+        self.right_click_text = None
+        self.c_key_pressed = False
 
         # Create point configurations
         self.original_point_configuration = {
@@ -38,6 +45,79 @@ class CustomChartView(QChartView):
     def set_series_label(self, label_2: QLabel):
         """Sets a QLabel to display the series coordinate."""
         self.series_label = label_2
+        
+    def mousePressEvent(self, event: QMouseEvent):
+        # Check if the 'C' key is pressed to enable marker placement
+        if self.c_key_pressed:
+            scene_position = self.mapToScene(event.pos())
+            chart_item_position = self.chart.mapFromScene(scene_position)
+            value_coordinate = self.chart.mapToValue(chart_item_position)
+            nearest_point = self.calculate_nearest_point(value_coordinate)
+            
+            if nearest_point:  # Make sure we have a valid point
+                marker_radius = 5
+                marker_size = QRectF(-marker_radius, -marker_radius, marker_radius * 2, marker_radius * 2)
+                marker_pen = QPen(QColor(Qt.black), 1)
+                
+                if event.button() == Qt.MouseButton.LeftButton or event.button() == Qt.MouseButton.RightButton:
+                    # Handle marker placement for both left and right clicks
+                    is_left = event.button() == Qt.MouseButton.LeftButton
+                    
+                    # Remove existing marker if it exists
+                    marker = self.left_click_marker if is_left else self.right_click_marker
+                    marker_text = self.left_click_text if is_left else self.right_click_text
+                    
+                    if marker:
+                        self.scene().removeItem(marker)
+                    if marker_text:
+                        self.scene().removeItem(marker_text)
+                    
+                    # Create new marker
+                    marker_brush = QBrush(QColor(Qt.green if is_left else Qt.cyan))
+                    new_marker = QGraphicsEllipseItem(marker_size)
+                    new_marker.setPen(marker_pen)
+                    new_marker.setBrush(marker_brush)
+                    new_marker.setPos(self.chart.mapToPosition(nearest_point))
+                    self.scene().addItem(new_marker)
+                    
+                    # Update the marker reference
+                    if is_left:
+                        self.left_click_marker = new_marker
+                    else:
+                        self.right_click_marker = new_marker
+                    
+                    self.scene().update()
+                    event.accept()
+                    return
+        
+        # Important: Accept the event even if we don't have a valid point
+        event.accept()
+        return
+    
+        # Only call parent implementation if C is not pressed
+        # super().mousePressEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        if self.c_key_pressed and event.button() == Qt.MouseButton.RightButton:
+            event.accept()
+            return
+        
+        super().mouseReleaseEvent(event)    
+        
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_C:
+            self.c_key_pressed = True
+            self.setDragMode(QChartView.DragMode.NoDrag)
+            event.accept()
+        else:
+            return super().keyPressEvent(event)
+        
+    def keyReleaseEvent(self, event):
+        if event.key() == Qt.Key.Key_C:
+            self.c_key_pressed = False
+            event.accept()
+        else:
+            return super().keyReleaseEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
 
@@ -65,7 +145,7 @@ class CustomChartView(QChartView):
         # Provides the x coordinate and the nearest y value of the series at the mouse position.
         if self.chart.series():
             series = self.chart.series()[0]
-            nearest_point = self.calculate_nearest_y_value(value_coordinate)
+            nearest_point = self.calculate_nearest_point(value_coordinate)
             
             if value_coordinate.y() >= 0 and value_coordinate.x() >= 0:
                 self.highlight_nearest_point(nearest_point, series)
@@ -94,7 +174,7 @@ class CustomChartView(QChartView):
 
         return super().leaveEvent(event)
     
-    def calculate_nearest_y_value(self, value_coordinate):
+    def calculate_nearest_point(self, value_coordinate):
         """Calculates the nearest y value and point to the given coordinate."""
         if not self.chart.series():
             return 0, None
