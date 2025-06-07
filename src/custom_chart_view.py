@@ -83,8 +83,10 @@ class CustomChartView(QChartView):
                 
                 # Update the marker reference
                 if is_left:
+                    self.left_point_value = nearest_point
                     self.left_click_marker = new_marker
                 else:
+                    self.right_point_value = nearest_point
                     self.right_click_marker = new_marker
                 
                 self.scene().update()
@@ -263,6 +265,7 @@ class CustomChartView(QChartView):
                     
                 if new_min < new_max:
                     y_axis.setRange(new_min, new_max)
+                    self.update_marker_positions()
                 else:
                     y_axis.setRange(new_min, new_max)
                 event.accept()
@@ -301,6 +304,7 @@ class CustomChartView(QChartView):
                     
                 if new_min < new_max:
                     x_axis.setRange(new_min, new_max)
+                    self.update_marker_positions()
                 else:
                     x_axis.setRange(new_min, new_max)
                 event.accept()
@@ -340,4 +344,15 @@ class CustomChartView(QChartView):
         if x_axis and y_axis:
             x_axis.setRange(float(self.original_range_x[0]), float(self.original_range_x[1]))
             y_axis.setRange(float(self.original_range_y[0]), float(self.original_range_y[1]))
+            self.update_marker_positions()
+            
+    def update_marker_positions(self):
+        """Updates the position of markers when chart view changes."""
+        if self.left_click_marker and hasattr(self, 'left_point_value'):
+            new_pos = self.chart.mapToPosition(self.left_point_value)
+            self.left_click_marker.setPos(new_pos)
+            
+        if self.right_click_marker and hasattr(self, 'right_point_value'):
+            new_pos = self.chart.mapToPosition(self.right_point_value)
+            self.right_click_marker.setPos(new_pos)
 
