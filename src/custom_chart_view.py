@@ -13,6 +13,8 @@ class CustomChartView(QChartView):
         
         self.hover_coordinate_label = None
         self.series_label = None
+        self.left_marker_label = None
+        self.right_marker_label = None
         
         self.highlighted_point = None
         self.original_point_size = 1
@@ -45,6 +47,14 @@ class CustomChartView(QChartView):
     def set_series_label(self, label_2: QLabel):
         """Sets a QLabel to display the series coordinate."""
         self.series_label = label_2
+        
+    def set_left_marker_label(self, left_marker_label: QLabel):
+        """Sets a QLabel to display the coordinates of the left marker label"""
+        self.left_marker_label = left_marker_label
+        
+    def set_right_marker_label(self, right_marker_label: QLabel):
+        """Sets a QLabel to display the coordinates of the right marker label"""
+        self.right_marker_label = right_marker_label
         
     def mousePressEvent(self, event: QMouseEvent):
         # Check if the 'C' key is pressed to enable marker placement
@@ -85,9 +95,12 @@ class CustomChartView(QChartView):
                 if is_left:
                     self.left_point_value = nearest_point
                     self.left_click_marker = new_marker
+                    self.left_marker_label.setText(f"Left Marker Value: {int(self.left_point_value.x())} years, ${self.left_point_value.y():,.2f}")
                 else:
                     self.right_point_value = nearest_point
                     self.right_click_marker = new_marker
+                    self.right_marker_label.setText(f"Right Marker Value: {int(self.right_point_value.x())} years, ${self.right_point_value.y():,.2f}")
+
                 
                 self.scene().update()
                 event.accept()
@@ -105,7 +118,8 @@ class CustomChartView(QChartView):
             event.accept()
             return
         
-        super().mouseReleaseEvent(event)    
+        super().mouseReleaseEvent(event)
+        self.update_marker_positions()    
         
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_C:

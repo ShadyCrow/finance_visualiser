@@ -39,21 +39,36 @@ class GraphWidget(QFrame):
         reset_action.triggered.connect(self.graph_view.reset_zoom)
         
         # Create a label to display data.
-        self.coordinate_label = QLabel("Mouse Coordinates:")
+        self.coordinate_label = QLabel("")
         self.coordinate_label.setAlignment(Qt.AlignCenter)
         self.graph_view.set_hover_coordinate_label(self.coordinate_label)
         
         # Create a label to display the series name and value.
-        self.series_label = QLabel("Series Information:")
+        self.series_label = QLabel("")
         self.series_label.setAlignment(Qt.AlignCenter)
         self.graph_view.set_series_label(self.series_label)
+        
+        self.left_marker_label = QLabel("")
+        self.left_marker_label.setAlignment(Qt.AlignCenter)
+        self.graph_view.set_left_marker_label(self.left_marker_label)
+        
+        
+        self.right_marker_label = QLabel("")
+        self.right_marker_label.setAlignment(Qt.AlignCenter)
+        self.graph_view.set_right_marker_label(self.right_marker_label)
+        
 
         # Set the alignment and word wrap for the label.
         self.coordinate_label.setWordWrap(True)
         self.series_label.setWordWrap(True) 
+        self.right_marker_label.setWordWrap(True)
+        self.left_marker_label.setWordWrap(True)
+        
         
         layout.addWidget(self.coordinate_label)
         layout.addWidget(self.series_label)
+        layout.addWidget(self.left_marker_label)
+        layout.addWidget(self.right_marker_label)
 
     @Slot(str, str, int, float)
     def update_graph_data(self, starting_amount, growth_rate, investment_period, investment_per_year):
